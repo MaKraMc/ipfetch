@@ -2,10 +2,9 @@
 
 # Function to display usage
 usage() {
-    echo "Usage: $0 [-t curl|wget] [--type curl|wget]"
+    echo "Usage: $0 [-t curl|wget] [--type curl|wget] [-l /path/to/dir|--local /path/to/dir]"
     exit 1
 }
-
 # Check if the script is run as root
 if [[ $EUID -ne 0 ]]; then
    echo "Install script must be run as root" 
@@ -19,8 +18,9 @@ fi
 
 # Default variant
 variant=""
+ipfetch_install_dir="/usr/share/ipfetch"
+ipfetch_bin_dir="/usr/bin/ipfetch"
 
-# Parse command-line options
 while [[ $# -gt 0 ]]; do
     case $1 in
         -t|--type)
@@ -29,6 +29,17 @@ while [[ $# -gt 0 ]]; do
                 variant=$1
             else
                 echo "Invalid option for -t/--type. Please choose 'curl' or 'wget'."
+                usage
+            fi
+            shift  # Shift past the argument
+            ;;
+        -l|--local)
+            shift  # Shift past the option
+            if [[ -d $1 ]]; then
+                ipfetch_install_dir="/usr/local/share/ipfetch"
+                ipfetch_bin_dir="$HOME/.local/bin"
+            else
+                echo "Invalid directory specified for -l/--local. Please provide a valid directory."
                 usage
             fi
             shift  # Shift past the argument
@@ -57,12 +68,12 @@ else
 fi
 
 # Create installation directory and set permissions
-mkdir -p /usr/share/ipfetch
-cp ./flags/* /usr/share/ipfetch/
-chmod -R 755 /usr/share/ipfetch
+mkdir -p "$ipfetch_install_dir"
+cp ./flags/* "$ipfetch_install_dir/"
+chmod -R 755 "$ipfetch_install_dir"
 
 # Copy the appropriate script to /usr/bin
-cp ./ipfetch-$variant /usr/bin/ipfetch
-chmod 755 /usr/bin/ipfetch
+cp "./ipfetch-$variant" "$ipfetch_bin_dir/ipfetch"
+chmod 755 "$ipfetch_bin_dir/ipfetch"
 
-echo "ipfetch has been successfully installed."
+echo "ipfetch has been successfully installed in $ipfetch_install_dir."
